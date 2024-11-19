@@ -1,4 +1,4 @@
-/// Check Splitting Contract
+/// @title Check Splitting Contract
 /// This splits a bill among participants using Ether.
 contract CheckSplit {
     struct Participant {
@@ -16,8 +16,8 @@ contract CheckSplit {
     event ContributionMade(address indexed participant, uint amount);
     event SplitCompleted(address indexed owner, uint totalAmount);
 
-    /// _totalAmount The total amount to be split
-    /// _participants List of participant addresses
+    /// @param _totalAmount The total amount to be split
+    /// @param _participants List of participant addresses
     constructor(uint _totalAmount, address[] memory _participants) public {
         require(_totalAmount > 0, "The total has to be greater than 0!");
         require(_participants.length > 0, "There has to be at least one participant!");
