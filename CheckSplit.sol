@@ -1,5 +1,3 @@
-/// @title Check Splitting Contract
-/// This splits a bill among participants using Ether.
 contract CheckSplit {
     struct Participant {
         uint contribution;
@@ -37,33 +35,55 @@ contract CheckSplit {
         require(msg.value > 0, "The contribution has to be greater than 0!");
         require(msg.value <= (totalAmount - totalContributed), "The contribution is more than the remaining total!");
 
+        uint remaining = totalAmount - totalContributed;
+        uint contributionAmount = msg.value;
+        uint excessAmount = 0;
+
         participants[msg.sender].contribution = msg.value;
         participants[msg.sender].hasPaid = true;
         totalContributed += msg.value;
 
         emit ContributionMade(msg.sender, msg.value);
 
+        if (msg.value > remaining) {
+            excessAmount = msg.value - remaining;// sets excess to the difference between the collected and whats remaining.
+            totalContributed -= excessAmount;
+        }
+
+        participants[msg.sender].contribution = contributionAmount;  // Store actual contribution
+        participants[msg.sender].hasPaid = true;
+        totalContributed += contributionAmount;  // Add actual contribution
+
+        emit ContributionMade(msg.sender, contributionAmount);  // Emit actual contribution
+
+        if (excessAmount > 0) {
+            payable(msg.sender).transfer(excessAmount); // refunds any excess amount
+        }
+
         if (totalContributed >= totalAmount) {
             completeSplit();
-        }
+        }       
+
     }
 
     function completeSplit() internal {
-        require(totalContributed >= totalAmount, "Not enough funds collected!");
-        require(!isCompleted, "The Split has already been completed!");
+        require(totalContributed >= totalAmount, "Not enough funds collected!");// Makes sure that the amount split is either more then or equal to the amount of the bill.
+        require(!isCompleted, "The Split has already been completed!");//Makes sure the split has not already been completed
 
-        isCompleted = true;
-        address payable ownerPayable = address(uint160(owner));
-        ownerPayable.transfer(address(this).balance);
+        isCompleted = true;//Sets the bool to true that way the function dose not keep repeating.
+        address payable ownerPayable = payable(owner);//Turns the address of the owner into one that can be paid by making it into an int thats 160 bits long
+        ownerPayable.transfer(address(this).balance);//Sends the final amount after all the funds are collected to the adress
 
-        emit SplitCompleted(owner, totalAmount);
+        emit SplitCompleted(owner, totalAmount);//logs the event split completed
     }
 
     function remainingAmount() public view returns (uint) {
-        return totalAmount - totalContributed;
+        return totalAmount - totalContributed;// retuns the difference between the bill total and the amount contribued.
     }
 
     function() external payable {
         contribute();
     }
 }
+
+
